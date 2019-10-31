@@ -1,0 +1,62 @@
+---
+title: "Kelsey_Dang_HW6_#6"
+author: "Kelsey Dang"
+date: "10/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+# HW6 #6 - Creating Functions
+
+Install the **bio3d** package for sequence and structure analysis
+
+```{r}
+library(bio3d)
+
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+```
+
+How would you generalize the original code (above) to work with any set of input protein structures?
+
+
+```{r}
+# This function takes the code chunk and simplifies it into a function call.
+# The purpose of this function is to analyze protein drug interactions by reading any PDB data and outputs a plot for the specified protein
+plot_PDB <- function(x)
+{
+  # Read the PDB
+  s <- read.pdb(x)
+  
+  s.chainA <- trim.pdb(s, chain="A", elety="CA")
+  
+  s.b <- s.chainA$atom$b
+  
+  # Outputs the plot for the specified protein
+  plotb3(s.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+}
+
+plot_PDB("4AKE")
+plot_PDB("1AKE")
+plot_PDB("1E4Y")
+```
+
+
+

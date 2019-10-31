@@ -1,0 +1,138 @@
+---
+title: "Class6 R Functions"
+author: "Kelsey Dang"
+date: "10/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# This is Heading 1
+This is my mark from class06 in **BIMM143**.
+
+```{r}
+# This is to a demo a code chunk
+plot(1:10)
+```
+
+
+## Practice reading files
+Here I practice reading 3 different files...
+
+```{r}
+read.csv("test1.txt")
+```
+
+```{r}
+read.table("test2.txt", sep="$", header = TRUE)
+```
+
+```{r}
+read.table("test3.txt", header = TRUE)
+# Separated by space and a tab
+```
+
+### Creating Functions
+```{r}
+# y is an optional input option
+add <- function(x, y=1)
+  {
+    # Sum the input x and y
+    x + y
+  }
+```
+
+```{r}
+add(1)
+add(5,5)
+
+# These are vectorized, this still works, within num of arguments
+add(c(1, 2, 3))
+add(c(1, 2,3), 4)
+```
+
+A new function to re-scale data
+
+```{r}
+# This function is using the range() function
+rescale <- function(x)
+{
+  rng <- range(x)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+
+rescale(1:10)
+```
+
+Test some
+```{r}
+# How would you get your function to work here...
+rescale( c(1,2,NA,3,10) )
+```
+
+```{r}
+x <- c(1,2,NA,3,10)
+# rng <- range(x) ; this gave u errors before, so remove NA
+rng <- range(x, na.rm = TRUE)
+rng
+```
+
+```{r}
+# Redoing the rescale function with removing the NA
+rescale2 <- function(x)
+{
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+
+rescale2( c(1,2,NA,3,10) )
+```
+
+```{r}
+rescale3 <- function(x, na.rm=TRUE, plot=FALSE)
+{
+ rng <-range(x, na.rm=na.rm)
+ print("Hello")
+ answer <- (x - rng[1]) / (rng[2] - rng[1])
+ 
+ print("is it me you are looking for?")
+ if(plot) {
+ plot(answer, typ="b", lwd=4)
+ }
+ print("I can see it in ...")
+ return(answer)
+}
+```
+
+```{r}
+rescale3(1:10, plot = TRUE)
+```
+
+```{r}
+rescale4 <- function(x, na.rm=TRUE, plot=FALSE)
+{
+ rng <-range(x, na.rm=na.rm)
+ print("Hello")
+ answer <- (x - rng[1]) / (rng[2] - rng[1])
+ return(answer)
+ print("is it me you are looking for?")
+ if(plot) {
+ plot(answer, typ="b", lwd=4)
+ }
+ print("I can see it in ...")
+ return(answer)
+}
+
+rescale4(1:10, plot=TRUE)
+```
+
+
+
+
+
+
+
+
+
