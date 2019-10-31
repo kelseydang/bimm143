@@ -1,0 +1,277 @@
+---
+title: "class08"
+author: "Kelsey Dang"
+date: "10/24/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# Notes:
+* Unsupervised learning: finding structure in unlabeled data  
+* Supervised learning: making predictions based on labeled data; predictions like regression or classification
+* Reinforcement learning: making decisions based on past experience
+* Point of the clustering is that you want to group as many points together while minimizing the distance between the points  
+* Model selection  
+  + Best outcome is based on total w/in cluster sym of squares
+* Scree plot
+  + elbow point --> where k is the best  
+  + try a range of different k values  
+* For heirarchical clustering there are multiples ways of linkage
+  + complete  
+  + single
+  + average
+  + centroid
+* Note: 
+  + kmeans(x, centers = <int>, nstart = <int>)
+  + hclust(dist(x))
+* PCA
+  + Each column shows how much each gene is transcribed in each cell
+  + inverse correlation: 2 diff types of cells as they are using different genes  
+  + positively correlated: cells are doing similar things
+  + converts the correlations among all cells into a representation we can more readily interpret
+  + get 2 main things from typical PCA
+    - new axis (called PCs or Eigenvalues)
+    - Eigenvalues that detail the amount of variance captured by each PC
+  
+## K-means Clustering ~
+```{r}
+# Generate some example data for clustering
+tmp <- c(rnorm(30,-3), rnorm(30,3))
+x <- cbind(x=tmp, y=rev(tmp))
+plot(x)
+```
+
+Use the kmeans() function setting k to 2 and nstart=20
+```{r}
+k <- kmeans(x, centers = 2, nstart = 20)
+```
+
+
+Inspect/print the results
+```{r}
+k
+```
+
+
+Q. How many points are in each cluster?
+  * There are 30 points in each cluster
+Q. What ‘component’ of your result object details
+ - cluster size?
+```{r}
+k$size
+```
+ - cluster assignment/membership?
+```{r}
+k$cluster
+```
+ - cluster center?
+```{r}
+k$centers
+```
+
+Plot x colored by the kmeans cluster assignment and add cluster centers as blue points
+```{r}
+plot(x, col = k$cluster)
+points(k$centers, col="blue", pch = 2, cex = 1.5,)
+```
+
+## Hierarchical Clustering ~
+The 'hclust()' function requires a distance matrix as input. You can get this 
+
+```{r}
+# First we need to calculate point (dis)similarity
+# as the Euclidean distance between observations
+dist_matrix <- dist(x)
+
+# The hclust() function returns a hierarchical
+# clustering model
+hc <- hclust(d = dist_matrix)
+# the print method is not so useful here
+hc
+```
+
+```{r}
+plot(hc)
+
+# With the red line, we can see how many clusters there are, but doesn't actually cut the tree
+abline(h = 10, col = "red")
+
+# Outputs the membership vector
+cutree(hc, h=10)
+```
+
+```{r}
+# Cute into k groups
+cutree(hc, k=4)
+```
+
+Your Turn!
+```{r}
+# Step 1. Generate some example data for clustering
+x <- rbind(
+ matrix(rnorm(100, mean=0, sd = 0.3), ncol = 2), # c1
+ matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2), # c2
+ matrix(c(rnorm(50, mean = 1, sd = 0.3), # c3
+ rnorm(50, mean = 0, sd = 0.3)), ncol = 2))
+colnames(x) <- c("x", "y")
+
+# Step 2. Plot the data without clustering
+plot(x)
+
+# Step 3. Generate colors for known clusters
+# (just so we can compare to hclust results)
+col <- as.factor( rep(c("c1","c2","c3"), each=50) )
+plot(x, col=col)
+```
+
+Q. Use the dist(), hclust(), plot() and cutree()
+ functions to return 2 and 3 clusters
+Q. How does this compare to your known 'col' groups?
+
+```{r}
+# Clustering
+hc <- hclust(dist(x))
+
+# Draw tree
+plot(hc)
+abline(h=2, col="red")
+
+# Cut the tree into clusters/groups
+grps <- cutree(hc, k=3)
+grps
+```
+
+Plot the data colored by their hclust result with k=3
+```{r}
+plot(x, col = grps)
+```
+
+```{r}
+table(grps)
+```
+
+Cross-tabulate i.e. compare our clustering result with the known answer
+
+```{r}
+table(grps, col)
+```
+
+## Principal Component Analysis (PCA) ~
+
+Read some example gene expression data
+```{r}
+mydata <- read.csv("https://tinyurl.com/expression-CSV",
+ row.names=1) 
+
+head(mydata)
+```
+
+How many genes are in this dataset?
+```{r}
+dim(mydata)
+nrow(mydata)
+```
+
+Let's go PCA with the **prcomp()** function.
+```{r}
+# lets do PCA
+pca <- prcomp(t(mydata), scale=TRUE)
+
+# A basic PC1 v PC2 2-D plot
+plot(pca$x[,1], pca$x[,2]) 
+```
+
+Precent variance is often more informative to look at
+```{r}
+# See what is returned by the prcomp() function
+attributes(pca) 
+
+pca.var <- pca$sdev^2
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1) 
+pca.var.per
+```
+
+Making the Scree Plot
+From the scree plot it is clear to see that PC1 accounted for almost all of the variation in the data
+```{r}
+pca.var <- pca$sdev^2
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
+
+barplot(pca.var.per, main="Scree Plot",
+ xlab="Principal Component", ylab="Percent Variation")
+```
+
+Let's make our plot a bit more useful
+```{r}
+# A vector of colors for wt and ko samples
+colvec <- colnames(mydata)
+colvec[grep("wt", colvec)] <- "red"
+colvec[grep("ko", colvec)] <- "blue"
+
+# Plot
+plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
+ xlab=paste0("PC1 (", pca.var.per[1], "%)"),
+ ylab=paste0("PC2 (", pca.var.per[2], "%)")) 
+
+# Add some labels
+plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
+ xlab=paste0("PC1 (", pca.var.per[1], "%)"),
+ ylab=paste0("PC2 (", pca.var.per[2], "%)"))
+
+# Click to identify which sample is which
+identify(pca$x[,1], pca$x[,2], labels=colnames(mydata)) 
+```
+
+## PCA Example with UK_foods
+
+```{r}
+x <- read.csv("UK_foods.csv", row.names = 1)
+head(x)
+```
+
+Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+  rows
+  17 rows, 5 columns
+```{r}
+dim(x)
+```
+
+Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+  I prefer to use the row.names=1 to solve the 'row-names problem' because using the rownames() function will strip off a column with each iteration.
+  
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+Q3: Changing what optional argument in the above barplot() function results in the following plot?
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+  
+Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+  Positive correlation! Cells are doing similar things. Points that aren't in the diagonal line means, one region is comsuming more of a specific food than another region.
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+
+PCA to the rescue!
+
+```{r}
+# Use the prcomp() PCA function 
+pca <- prcomp( t(x) )
+summary(pca)
+```
+
+Q7. Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
+```{r}
+# Plot PC1 vs PC2
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x), col=)
+```
+
+
