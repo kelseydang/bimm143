@@ -2,7 +2,7 @@
 title: "Class 7 R functions and packages"
 author: "Kelsey Dang"
 date: "10/22/2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -118,7 +118,7 @@ both_na2 <- function(x, y)
 
 Testing our new both_na2() function with using the stop() function
 ```{r}
-both_na2(x, y3)
+#both_na2(x, y3)
 ```
 
 ### Practice writing function : grade()
