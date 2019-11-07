@@ -1,0 +1,67 @@
+---
+title: "Class 11: Structural Bioinformatics I"
+author: "Kelsey Dang"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The PDB database for biomolecular structure data
+
+>Q1: Download a CSV file from the PDB site (accessible from “Analyze” -> “PDB Statistics”
+“by Experimental Method and Molecular Type”. 
+
+>Determine what proportion of structures are protein?
+
+92.17%  
+
+Download CSV files from PDB website (“Analyze” -> “PDB Statistics” >
+“by Experimental Method and Molecular Type”)
+```{r}
+# Read CSV
+data <- read.csv("Data Export Summary.csv")
+data
+```
+
+Proportion of entries from each method
+```{r}
+round(data$Total / sum(data$Total) * 100, 2)
+```
+
+Proportion that are protein
+```{r}
+round(sum(data$Proteins) / sum(data$Total) * 100, 2)
+```
+
+> Q2: Type HIV in the PDB website search box on the home page and determine how many
+HIV-1 protease structures are in the current PDB?
+
+
+## Section 4.2
+
+Here we will read the 1HSG PDB structure and select the protein component and write out a new **protein-only** PDB format file. We then do the same for the ligand (i.e. known drug molecule) creating a **ligand-only** PDB file.
+
+```{r}
+library(bio3d)
+
+pdb <- read.pdb("1hsg.pdb")
+pdb
+#write.pdb("1hsg.pdb")
+#trim.pdb()
+```
+
+Creating protein PDB
+```{r}
+protein <- atom.select(pdb, "protein", value=TRUE)
+write.pdb(ligand, file = "1hsg_protein.pdb")
+```
+
+
+Creating ligand PDB
+```{r}
+ligand <- atom.select(pdb, "ligand", value=TRUE)
+write.pdb(ligand, file = "1hsg_ligand.pdb")
+```
+
