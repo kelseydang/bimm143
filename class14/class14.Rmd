@@ -1,0 +1,242 @@
+---
+title: "Class14: Transcriptomics and the analysis of RNA-Seq data"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DESeq2 Setup
+
+We will use the DESeq2 package from bioconductor. To install this we ran **in the CONSOLE** - note eval = FALSE option!:
+
+```{r eval=FALSE}
+install.packages("BiocManager")
+BiocManager::install()
+BiocManager::install("DESeq2")
+```
+
+## Section 2. Import countData and colData
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", stringsAsFactors = FALSE)
+metadata <- read.csv("airway_metadata.csv", stringsAsFactors = FALSE)
+```
+
+Have a peak...
+```{r}
+head(counts)
+```
+
+```{r}
+head(metadata)
+```
+
+How many genes do we have in this database?
+```{r}
+nrow(counts)
+```
+
+How many experiments do we have in this database?
+```{r}
+ncol(counts) - 1
+```
+
+```{r}
+nrow(metadata)
+```
+
+## Section 3. Toy differential gene expression
+
+Let's perform some exploratory differential gene expression analysis!
+
+We want to know if there is a difference in expression values for control (non-drug) vs. treated (i.e. drug added cell lines).
+
+First step is to find which experiments were the control experiments and then get the average values across all control experiments. Then we will do the same for drug treated.
+
+```{r}
+View(metadata)
+```
+
+Calculate the mean counts per gene across these samples.
+```{r}
+# Grabbing the controls within the metadata
+control <- metadata[metadata[ ,"dex"]=="control",]
+control$id
+```
+
+Now, calculate the mean values across these control columns of **countdata**
+```{r}
+control.mean <- rowSums(counts[,control$id]) / length(control$id)
+
+names(control.mean) <- counts$ensgene
+```
+
+Now do the same thing, but for the Treated.
+```{r}
+# Grabbing the treated within the metadata
+treated <- metadata[metadata[ ,"dex"]=="treated",]
+treated$id
+```
+
+```{r}
+treated.mean <- rowSums(counts[,treated$id]) / length(treated$id)
+
+names(treated.mean) <- counts$ensgene
+```
+
+We will combine our meancount data for bookkeeping purposes.
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+```
+
+Plot control vs. treated!
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean)
+```
+
+Plot the axes on a log scale
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean, log="xy")
+```
+We can find candidate differentially expressed genes by looking for genes with a large change between control and dex-treated samples. We usually look at the log2 of the fold change, because this has better mathematical properties.
+
+Here we calculate log2foldchange, add it to our meancounts data.frame and inspect the results either with the **head()** or the **View()** function for example.
+
+```{r}
+meancounts$log2fc <- log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+head(meancounts)
+```
+
+Filter out our data to remove the "weird" results.
+```{r}
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+
+to.rm <- unique(zero.vals[,1])
+mycounts <- meancounts[-to.rm,]
+head(mycounts)
+```
+
+Let's filter the dataset both ways to see how many genes are up or down-regulated
+```{r}
+up.ind <- mycounts$log2fc > 2
+down.ind <- mycounts$log2fc < (-2)
+
+# Number up-regulated genes
+sum(up.ind)
+
+# Number down-regulated genes
+sum(down.ind)
+```
+
+## Section 4. Adding annotation data
+
+## Section 5. DESeq2 analysis
+
+Let’s do this the right way. DESeq2 is an R package for analyzing count-based NGS data like RNA-seq. It is available from Bioconductor. **Bioconductor** is a project to provide tools for analyzing high-throughput genomic data including RNA-seq, ChIP-seq and arrays.
+
+```{r}
+library(DESeq2)
+citation("DESeq2")
+```
+
+We will use the **DESeqDataSetFromMatrix()** function to build the required DESeqDataSet object and call it dds, short for our DESeqDataSet. If you get a warning about “some variables in design formula are characters, converting to factors” don’t worry about it. Take a look at the dds object once you create it.
+```{r}
+dds <- DESeqDataSetFromMatrix(countData=counts, 
+                              colData=metadata, 
+                              design=~dex, 
+                              tidy=TRUE)
+dds
+```
+
+Run DESeq2...
+```{r}
+dds <- DESeq(dds)
+```
+
+Get the results
+```{r}
+res <- results(dds)
+res
+```
+
+## Section 6. Data Visualization
+
+### Volcano Plot
+Let’s make another commonly produced visualization from this data, namely so-called [Volcano plots](https://en.wikipedia.org/wiki/Volcano_plot_(statistics)). These summary figures are frequently used to highlight the proportion of genes that are both significantly regulated and display a high fold change.
+
+First, let’s add a column called sig to our full res results that evaluates to TRUE only if padj<0.05 and the absolute log2FoldChange>2, FALSE if not, and NA if padj is also NA
+
+```{r}
+res$sig <- res$padj<0.05 & abs(res$log2FoldChange)>2
+
+# How many of each?
+table(res$sig)
+```
+
+```{r}
+sum(is.na(res$sig))
+```
+
+
+```{r}
+# Set the color palette for our plot
+palette( c("gray","blue") )
+
+plot( res$log2FoldChange,  -log(res$padj), 
+ col=res$sig+1, ylab="-Log(P-value)", xlab="Log2(FoldChange)")
+
+# Add some cut-off lines
+abline(v=c(-2,2), col="darkgray", lty=2)
+abline(h=-log(0.05), col="darkgray", lty=2)
+```
+
+```{r}
+# Reset the color palette
+```
+
+We could also setup a custom color vector indicating transcripts with large fold change and significant differences between conditions:
+
+```{r}
+# Setup our custom point color vector 
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ]  <- "red" 
+
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+
+#Volcano plot with custom colors 
+plot( res$log2FoldChange,  -log(res$padj), 
+ col=mycols, ylab="-Log(P-value)", xlab="Log2(FoldChange)" )
+
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.05), col="gray", lty=2)
+```
+
+and do the same plot with **ggplot**...
+```{r}
+ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) + 
+    geom_point() + 
+    ggtitle("Volcano plot")
+```
+
+Save the results!!
+```{r}
+write.csv(res, file = "expression_results.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
