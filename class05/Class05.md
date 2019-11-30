@@ -74,7 +74,7 @@ The Customizations:
 <!-- end list -->
 
 ``` r
-plot(weight$Age, 
+babyplot <- plot(weight$Age, 
      weight$Weight, 
      type= "o",
      pch=15,
@@ -88,6 +88,12 @@ plot(weight$Age,
 ```
 
 ![](class05_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+babyplot
+```
+
+    ## NULL
 
 ## 2B - Barplot
 
