@@ -38,7 +38,7 @@ knitr::opts_chunk$set(echo = TRUE)
     - new axis (called PCs or Eigenvalues)
     - Eigenvalues that detail the amount of variance captured by each PC
   
-## K-means Clustering ~
+# K-means Clustering ~
 ```{r}
 # Generate some example data for clustering
 tmp <- c(rnorm(30,-3), rnorm(30,3))
@@ -80,7 +80,7 @@ plot(x, col = k$cluster)
 points(k$centers, col="blue", pch = 2, cex = 1.5,)
 ```
 
-## Hierarchical Clustering ~
+# Hierarchical Clustering ~
 The 'hclust()' function requires a distance matrix as input. You can get this 
 
 ```{r}
@@ -91,17 +91,37 @@ dist_matrix <- dist(x)
 # The hclust() function returns a hierarchical
 # clustering model
 hc <- hclust(d = dist_matrix)
+
 # the print method is not so useful here
 hc
 ```
 
+Let's have a closer look...
 ```{r}
+# Our input is a distance matrix from the dist()
+# function. Lets make sure we understand it first
+dist_matrix <- dist(x)
+dim(dist_matrix)
+
+View( as.matrix(dist_matrix) )
+dim(x)
+
+dim( as.matrix(dist_matrix) )
+
+# Note. symmetrical pairwise distance matrix
+```
+
+
+```{r}
+# Draws a dendrogram
+hc <- hclust(dist(x))
 plot(hc)
 
 # With the red line, we can see how many clusters there are, but doesn't actually cut the tree
 abline(h = 10, col = "red")
 
-# Outputs the membership vector
+# Outputs the membership vector;  Cut by height h
+# Cut into h groups
 cutree(hc, h=10)
 ```
 
@@ -110,7 +130,37 @@ cutree(hc, h=10)
 cutree(hc, k=4)
 ```
 
-Your Turn!
+Linking clusters in hierarchical clustering:
+  * How is distance between clusters determined?  
+  * There are 4 main methods to determine which cluster should be linked:  
+    - Complete: pairwise similarity between all observations in cluster1 and cluster2, and uses largest of similarities  
+    - Single: same as above but uses smallest of similarities  
+    - Average: same as abive but uses average of similarities  
+    - Centroid: finds centroid of cluster1 and centroid of cluster2, and uses similarity between two centroids.
+    
+Linkage in R:
+```{r}
+# Using different heirarchical clustering methods
+d = dist_matrix
+hc.complete <- hclust(d, method="complete")
+plot(hc.complete, main="Heirarchical Clustering Method - Complete")
+```
+
+```{R}
+d = dist_matrix
+hc.average <- hclust(d, method="average")
+plot(hc.average, main="Heirarchical Clustering Method - Average")
+```
+
+```{R}
+d = dist_matrix
+hc.single <- hclust(d, method="single")
+plot(hc.single, main="Heirarchical Clustering Method - Single")
+```
+
+# Your Turn!  
+Goal:  
+  * Examine some real life multivariate data in order to explain, what <span style="color:red">Principle Component Analysis (PCA)</span> achieves.
 ```{r}
 # Step 1. Generate some example data for clustering
 x <- rbind(
@@ -131,7 +181,6 @@ plot(x, col=col)
 
 Q. Use the dist(), hclust(), plot() and cutree()
  functions to return 2 and 3 clusters
-Q. How does this compare to your known 'col' groups?
 
 ```{r}
 # Clustering
@@ -186,7 +235,7 @@ pca <- prcomp(t(mydata), scale=TRUE)
 plot(pca$x[,1], pca$x[,2]) 
 ```
 
-Precent variance is often more informative to look at
+Precent variance is often more informative to look at. Use the square of pca$sdev, standard deviation, to calculate how much variation in the original data each PC accounts for:
 ```{r}
 # See what is returned by the prcomp() function
 attributes(pca) 
@@ -197,7 +246,8 @@ pca.var.per
 ```
 
 Making the Scree Plot
-From the scree plot it is clear to see that PC1 accounted for almost all of the variation in the data
+From the scree plot it is clear to see that PC1 accounted for almost all of the variation in the data.
+This indicates that we have successfully reduced a 100 dimensional dataset down to only one dimension that retains the main essential/principal features of the original data.
 ```{r}
 pca.var <- pca$sdev^2
 pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
@@ -223,20 +273,25 @@ plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
  xlab=paste0("PC1 (", pca.var.per[1], "%)"),
  ylab=paste0("PC2 (", pca.var.per[2], "%)"))
 
+# Adding labels to our plot points
+text(pca$x[,1], pca$x[,2], labels = colnames(mydata), pos=c(rep(4,5), rep(2,5)))
+
 # Click to identify which sample is which
 identify(pca$x[,1], pca$x[,2], labels=colnames(mydata)) 
 ```
 
-## PCA Example with UK_foods
+# PCA Example with UK_foods - Hands-on Worksheet
 
+Read the data file and set the row.names arg of read.csv() to be the first column
 ```{r}
 x <- read.csv("UK_foods.csv", row.names = 1)
 head(x)
 ```
 
 Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
-  rows
   17 rows, 5 columns
+  
+<span style="color:green">Hint: use the **dim()** function, which returns the number of rows and columns or the **nrow()** and **ncol()** functions to return each separately.</span>
 ```{r}
 dim(x)
 ```
@@ -244,22 +299,31 @@ dim(x)
 Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
   I prefer to use the row.names=1 to solve the 'row-names problem' because using the rownames() function will strip off a column with each iteration.
   
+### Spotting major differences and trends
+A cursory glance over the numbers in this table does not reveal much of anything. Indeed in general it is difficult to extract meaning in regard to major differences and trends from any given array of numbers. Generating regular bar-plots and various pairwise plots does not help too much either:
 ```{r}
 barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
 ```
 
 Q3: Changing what optional argument in the above barplot() function results in the following plot?
+  * Setting **beside=FALSE** in the barplot() code would have the columns of height portrated as stacked bars, and if TRUE then the columns are portrayed as juxtaposed bars.  
 ```{r}
 barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
 ```
   
-Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+Q4: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
   Positive correlation! Cells are doing similar things. Points that aren't in the diagonal line means, one region is comsuming more of a specific food than another region.
 ```{r}
 pairs(x, col=rainbow(10), pch=16)
 ```
 
-PCA to the rescue!
+Note:  
+Even relatively small datasets can prove chalanging to interpertate Given that it is quite difficult to make sense of even this relatively small data set. Hopefully, we can clearly see that a powerful analytical method is absolutely necessary if we wish to observe trends and patterns in larger datasets.  
+
+PCA to the rescue!  
+  * To perform PCA in R there are a lot of functions to chose from and many packages offer helpful PCA implementations and useful graphing approaches  
+  * However, in this example we'll use the base R <span style="color:red">prcomp()</span> function.  
+  * <span style="color:red">prcomp()</span> expects the observations to be rows and the variables to be cols therefore we need to first transpose our data.frame matrix with the <span style="color:red">t()</span> transpose function  
 
 ```{r}
 # Use the prcomp() PCA function 
@@ -273,5 +337,40 @@ Q7. Complete the code below to generate a plot of PC1 vs PC2. The second line ad
 plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
 text(pca$x[,1], pca$x[,2], colnames(x), col=)
 ```
+
+Below we can use the square of pca$sdev, which stands for "standard deviation", to calculate how much variation in the original data each PC accounts for.
+```{r}
+v <- round( pca$sdev^2/sum(pca$sdev^2) * 100 )
+v
+```
+
+```{r}
+# or the second row here...
+z <- summary(pca)
+z$importance
+```
+
+This information can be summarized in a plot of the variances (eigenvalues) with respect to the principal component number (eigenvector number), which is given below.
+```{r}
+barplot(v, xlab="Principal Component", ylab="Percent Variation")
+```
+
+We can also consider the influence of each of the original variables upon the principal components (typically known as **loading scores**). This information can be obtained from the **prcomp()** returned $rotation component. It can also be summarized with a call to **biplot()**, see below:
+```{r}
+## Lets focus on PC1 as it accounts for > 90% of variance 
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2 )
+```
+
+Here we see observations (in this case, foods) with the largest positive and negative loading scores that effectively "push" N. Ireland to right positive side of the plot
+
+## Biplots
+Another way to see this information together with the main PCA plot is in a so-called biplot:  
+```{r}
+## The inbuilt biplot() can be useful for small datasets 
+biplot(pca)
+```
+
+
 
 
