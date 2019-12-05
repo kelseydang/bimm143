@@ -5,6 +5,9 @@ Kelsey Dang
 
 # 1\. Exploratory Data Analysis
 
+Use the read.csv() function to read the CSV (comma-separated values)
+file containing the data.
+
 ``` r
 wisc.df <- read.csv("WisconsinCancer.csv")
 head(wisc.df)
@@ -155,10 +158,16 @@ head(wisc.data)
 
 Store the diagnosis for reference in the future as a separate vector
 
+Setup a separate new vector called **diagnosis** that contains the data
+from the diagnosis column of the original dataset. We will use this
+later to check our results.
+
 ``` r
 # Create diagnosis vector for later 
 diagnosis <- wisc.df$diagnosis
 ```
+
+## Exploratory Data Analysis
 
 Q1. How many observations are in this dataset?
 
@@ -265,6 +274,10 @@ apply(wisc.data,2,sd)
     ##    concave.points_worst          symmetry_worst fractal_dimension_worst 
     ##            6.573234e-02            6.186747e-02            1.806127e-02
 
+The function <span style="color:red">round()</span> rounds the values in
+its first arg to the specified num of decimal places (default 0) or the
+second arg.
+
 ``` r
 round(apply(wisc.data, 2, sd), 3)
 ```
@@ -321,14 +334,13 @@ summary(wisc.pr)
     ## Proportion of Variance 0.00052 0.00027 0.00023 0.00005 0.00002 0.00000
     ## Cumulative Proportion  0.99942 0.99969 0.99992 0.99997 1.00000 1.00000
 
-## Interpreting PCA results
-
 PC1 v. PC2 plot
 
 Color by cancer/non-cancer
 
 ``` r
-plot(wisc.pr$x[,1], wisc.pr$x[,2], col=diagnosis)
+# Scatter plot observations by components 1 and 2
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col=diagnosis, xlab = "PC1", ylab = "PC2")
 ```
 
 ![](class09_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
@@ -432,16 +444,7 @@ Create a hierarchical clustering model using complete linkage
 
 ``` r
 wisc.hclust <- hclust(data.dist, method = "complete")
-wisc.hclust
 ```
-
-    ## 
-    ## Call:
-    ## hclust(d = data.dist, method = "complete")
-    ## 
-    ## Cluster method   : complete 
-    ## Distance         : euclidean 
-    ## Number of objects: 569
 
 ## Results of Hierarchical Clustering
 
@@ -457,7 +460,16 @@ plot(wisc.hclust)
 abline(wisc.hclust, col="red", lty=2)
 ```
 
-![](class09_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](class09_files/figure-gfm/unnamed-chunk-22-1.png)<!-- --> \#\#\#
+Selecting number of clusters In this section, you will compare the
+outputs from your hierarchical clustering model to the actual
+diagnoses.  
+<span style="color:green">Unsupervised learning</span> - normally when
+performing unsupervised learning, a target variable (i.e. known answer
+or labels) aren’t available  
+<span style="color:green">Supervised learning</span> - when performing
+supervised learning, you’re trying to predict some target variable of
+interest and that target variable is available in the original data
 
 Use cutree() to cut the tree so that it has 4 clusters. Assign the
 output to the variable wisc.hclust.clusters.
@@ -473,9 +485,6 @@ table(wisc.hclust.clusters, diagnosis)
     ##                    2   2   5
     ##                    3 343  40
     ##                    4   0   2
-
-Q12. Can you find a better cluster vs diagnoses match with by cutting
-into a different number of clusters between 2 and 10?
 
 # 4\. K-means Clustering
 
@@ -493,11 +502,138 @@ and repeat the algorithm 20 times (by setting setting the value of the
 nstart argument appropriately). Running multiple times such as this will
 help to find a well performing model.
 
+``` r
+wisc.km <- kmeans(scale(wisc.data), centers = 2, nstart = 20)
+#head(wisc.km)
+```
+
+Use the table() function to compare the cluster membership of the
+k-means model (wisc.km$cluster) to the actual diagnoses contained in the
+diagnosis vector.
+
+``` r
+table(wisc.km$cluster, diagnosis)
+```
+
+    ##    diagnosis
+    ##       B   M
+    ##   1  14 175
+    ##   2 343  37
+
+Use the table() function to compare the cluster membership of the
+k-means model (wisc.km$cluster) to your hierarchical clustering model
+from above (wisc.hclust.clusters). Recall the cluster membership of the
+hierarchical clustering model is contained in wisc.hclust.clusters
+object.
+
+``` r
+table(wisc.hclust.clusters, wisc.km$cluster)
+```
+
+    ##                     
+    ## wisc.hclust.clusters   1   2
+    ##                    1 160  17
+    ##                    2   7   0
+    ##                    3  20 363
+    ##                    4   2   0
+
 # 5\. Combining Methods
+
+  - Recall that the PCA model requires significantly fewer features to
+    describe 70%, 80%, 95% of the variability of the data.  
+  - In addition to normalizing data and potentially avoiding
+    over-fitting, PCA also uncorrelates the variables, sometimes
+    improving the performance of other modeling techniques
+
+Let’s see if PCA improves or degrades the performance of heirarchical
+clustering.
+
+Using the minimum num of principle components required to describe at
+LEAST 90% of the variability in the data, create a hierarchical
+clustering model with the linkage <span style="color:blue">method =
+“ward.D2”</span>. We use Ward’s criterion here because it is based on
+multidimensional variance like principal components analysis.
+
+``` r
+wisc.pr.hclust <- hclust( dist(wisc.pr$x[, 1:7]) , method = "ward.D2")
+```
+
+``` r
+grps <- cutree(wisc.pr.hclust, k=2)
+table(grps)
+```
+
+    ## grps
+    ##   1   2 
+    ## 216 353
+
+``` r
+table(grps, diagnosis)
+```
+
+    ##     diagnosis
+    ## grps   B   M
+    ##    1  28 188
+    ##    2 329  24
+
+``` r
+plot(wisc.pr$x[,1:2], col=grps)
+```
+
+![](class09_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+
+``` r
+plot(wisc.pr$x[,1:2], col=diagnosis)
+```
+
+![](class09_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+**Note:** the color swap here as the hclust cluster1 is mostly “M” and
+cluster2 is mostly “B” as we saw from the results of calling table(). To
+match things up we can turn our groups into a factor and reorder the
+levels so cluster2 comes first.
+
+``` r
+g <- as.factor(grps)
+levels(g)
+```
+
+    ## [1] "1" "2"
+
+``` r
+g <- relevel(g,2)
+levels(g)
+```
+
+    ## [1] "2" "1"
+
+``` r
+# Plot using our re-ordered factor 
+plot(wisc.pr$x[,1:2], col=g)
+```
+
+![](class09_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 # 6\. Sensitivity/Specificity
 
+  - <span style="color:purple">Sensitivity:</span>
+      - refers to a test’s ability to correctly detect ill patients who
+        do have the condition.  
+      - In our example, sensitivity is the total number of samples in
+        the cluster identified as predominately malignant (cancerous)
+        divided by the total number of known malignant samples.  
+  - <span style="color:purple">Specificity:</span>
+      - relates to a test’s ability to correctly reject healthy patients
+        without a condition.  
+      - In our example, specificity is the proportion of benign (not
+        cancerous) samples in the cluster identified as predominantly
+        benign that are known to be benign.
+
 # 7\. Prediction
+
+We will use the **predict()** function that will take our PCA model from
+before and new cancer cell data and project that data onto our PCA
+space.
 
 ``` r
 #url <- "new_samples.csv"
@@ -532,9 +668,7 @@ points(npc[,1], npc[,2], col="blue", pch=16, cex=3)
 text(npc[,1], npc[,2], c(1,2), col="white")
 ```
 
-![](class09_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](class09_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 Q17. Which of these new patients should we prioritize for follow up
 based on your results? Patient 2
-
-# 8\.
