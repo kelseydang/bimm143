@@ -2,7 +2,7 @@
 title: "Analysis of Human Breast Cancer Cells"
 author: "Kelsey Dang"
 date: "10/29/2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
