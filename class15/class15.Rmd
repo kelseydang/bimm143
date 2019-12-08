@@ -14,6 +14,11 @@ The data for for hands-on session comes from GEO entry: GSE37704, which is assoc
   
 # Section 1. Differential Expression Analysis
 ```{r}
+library(DESeq2)
+```
+
+
+```{r}
 # Load our data files
 metaFile <- "GSE37704_metadata.csv"
 countFile <- "GSE37704_featurecounts.csv"
@@ -75,17 +80,31 @@ dds = DESeqDataSetFromMatrix(countData=countData,
 # Run the analysis
 dds = DESeq(dds)
 ```
-
-get out results
 ```{r}
-res = results(dds)
+dds
+```
+
+get our results for the HoxA1 knockdown vs control siRNA
+```{r}
+res = results(dds, contrast=c("condition", "hoxa1_kd", "control_sirna"))
 ```
 
 ```{r}
 res
 ```
 
+Call the **summary()** function on your results to get a sense of how many genes are up or down-regulated at the default 0.1 p-value cutoff
+```{r}
+summary(res)
+```
+
+
 ## Volcano plot
+```{r}
+plot( res$log2FoldChange, -log(res$padj) )
+```
+
+
 ```{r}
 # Make a color vector for all genes
 mycols <- rep("gray", nrow(res) )
@@ -95,10 +114,10 @@ mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
 
 # Color blue those with adjusted p-value less than 0.01
 #  and absolute fold change more than 2
-inds <- (abs(res$pvalue) < 0.01) & (abs(res$log2FoldChange) > 2 )
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
 mycols[ inds ] <- "blue"
 
-plot( res$log2FoldChange, -log(res$padj), col= c("gray", "red", "blue"), xlab="Log2(FoldChange)", ylab="-Log(P-value)" )
+plot( res$log2FoldChange, -log(res$padj), col= mycols, xlab="Log2(FoldChange)", ylab="-Log(P-value)" )
 ```
 
 ## Add gene symbols and entrez ids
@@ -165,9 +184,9 @@ kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
 head(kegg.sets.hs, 3)
 ```
 
-Note: The main gage() function requires a names vector of fold changes, where the names of the values are the Entrez gene IDs
+Note: The main **gage()** function requires a names vector of fold changes, where the names of the values are the Entrez gene IDs
 
-Note that we used the mapIDs() function above to obtain Entrez gene IDs (stored in res$entrez) and we have the fold change results from DESeq2 analysis (stored in res$log2FoldChange).
+Note that we used the **mapIDs()** function above to obtain Entrez gene IDs (stored in res$entrez) and we have the fold change results from DESeq2 analysis (stored in res$log2FoldChange).
 ```{r}
 foldchanges = res$log2FoldChange
 names(foldchanges) = res$entrez
@@ -185,12 +204,18 @@ Now, lets look at the object returned from **gage()**
 attributes(keggres)
 ```
 
+Each keggres$less and keggres$greater object is data matrix with gene sets as rows sorted by p-value. The top "less/down" pathways is "Cell cycle" with the KEGG pathway identifier.
 ```{r}
 # Look at the first few down (less) pathways
 head(keggres$less)
 ```
 
 Now, let's try out the **pathview()** function from the pathview package to make a pathway plot with our RNA-Seq expression results shown in color.
+```{r}
+library(pathview)
+```
+
+
 ```{r}
 pathview(gene.data=foldchanges, pathway.id="hsa04110")
 ```
@@ -201,7 +226,41 @@ You can play with the other input arguments to pathview() to change the display 
 pathview(gene.data=foldchanges, pathway.id="hsa04110", kegg.native=FALSE)
 ```
 
+Now, let's process our results a bit more to automagicaly pull out the top 5 upregulated pathways, then further process that just to get the pathway IDs needed by the pathview() function. We'll use these KEGG pathway IDs for pathview plotting below.  
 
+```{r}
+# Focus on top 5 upregulated pathways here for demo purposes only
+keggrespathways <- rownames(keggres$greater)[1:5]
 
+# Extract the 8 char long IDs part of each string
+keggresids = substr(keggrespathways, start=1, stop=8)
+keggresids
+```
+
+Finally, let's pass these IDs in keggresids to the pathview() function to draw plots for all the top 5 pathways.
+```{r}
+pathview(gene.data=foldchanges, pathway.id=keggresids, species="hsa")
+```
+
+# Section 3: Gene Ontology (GO)
+
+The gageData package has pre-compiled databases mapping genes to KEGG pathways and GO terms for common organisms.
+```{r}
+library(gageData)
+```
+
+```{r}
+data(go.sets.hs)
+data(go.subs.hs)
+```
+
+```{r}
+# Focus on Biological Process subset of GO
+gobpsets = go.sets.hs[go.subs.hs$BP]
+
+gobpres = gage(foldchanges, gsets=gobpsets, same.dir=TRUE)
+
+lapply(gobpres, head)
+```
 
 
