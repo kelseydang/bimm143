@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Class18: Cancer Genomics"
 output: github_document
 ---
 
@@ -9,18 +9,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Hands-on Section Worksheet Part 1
 ## 1. The NCI Genomic Data Commons
 
-### Q1  
 How many Cases (i.e. patient samples) have been found to have p53 mutations?  
 4,008
 
-### Q2  
 What are the top 6 misssense mutations found in this gene?  chr17:g.7675088C>T, chr17:g.7673803G>A, chr17:g.7674220C>T, chr17:g.7673802C>T, chr17:g.7674221G>A, chr17:g.7673776G>A
-
-### Q3
-Which domain of the protein (as annotated by PFAM) do these mutations reside in?  
-
-### Q4
-What are the top 6 primary sites (i.e. cancer locations such as Lung, Brain, etc.) with p53 mutations and how many primary sites have p53 mutations been found in?  
 
 ## 2. The GenomicDataCommons R package
 
@@ -60,6 +52,7 @@ Note that the **facet()** and **aggregations()** functions here are from the Gen
 
 Let's make a barplot of the cases per project. Let's plot this data with a log scale for the y axis, rotated axis labels, and color the bar corresponding to the TCGA-PAAD project.
 
+Write the R code to make a barplot of the cases per project. Lets plot this data with a log scale for the y axis (log="y"), rotated axis labels (las=2) and color the bar coresponding to the TCGA-PAAD project.  
 ```{r}
 x <- cases_by_project$project.project_id
 

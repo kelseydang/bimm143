@@ -1,32 +1,19 @@
-Untitled
+Class18: Cancer Genomics
 ================
 
-# 1\. The NCI Genomic Data Commons
+# Hands-on Section Worksheet Part 1
 
-## Q1
+## 1\. The NCI Genomic Data Commons
 
 How many Cases (i.e. patient samples) have been found to have p53
 mutations?  
 4,008
 
-## Q2
-
 What are the top 6 misssense mutations found in this gene?
 chr17:g.7675088C\>T, chr17:g.7673803G\>A, chr17:g.7674220C\>T,
 chr17:g.7673802C\>T, chr17:g.7674221G\>A, chr17:g.7673776G\>A
 
-## Q3
-
-Which domain of the protein (as annotated by PFAM) do these mutations
-reside in?
-
-## Q4
-
-What are the top 6 primary sites (i.e. cancer locations such as Lung,
-Brain, etc.) with p53 mutations and how many primary sites have p53
-mutations been found in?
-
-# 2\. The GenomicDataCommons R package
+## 2\. The GenomicDataCommons R package
 
 Once installed, load the packages, as usual.
 
@@ -69,7 +56,7 @@ status()
     ## $version
     ## [1] 1
 
-# 3\. Querying the GDC from R
+## 3\. Querying the GDC from R
 
 ``` r
 projects <- getGDCprojects()
@@ -194,6 +181,10 @@ id and then count them up.
 Let’s make a barplot of the cases per project. Let’s plot this data with
 a log scale for the y axis, rotated axis labels, and color the bar
 corresponding to the TCGA-PAAD project.
+
+Write the R code to make a barplot of the cases per project. Lets plot
+this data with a log scale for the y axis (log=“y”), rotated axis labels
+(las=2) and color the bar coresponding to the TCGA-PAAD project.
 
 ``` r
 x <- cases_by_project$project.project_id
@@ -360,3 +351,66 @@ head(samp)
     ## 4 TCGA-PAAD
     ## 5 TCGA-PAAD
     ## 6 TCGA-PAAD
+
+# Part 2: Designing a Personalized Cancer Vaccine
+
+## Q1: Identify sequence regions that contain all 9-mer peptides that are only found in the tumor.
+
+``` r
+library(bio3d)
+seq <- read.fasta("lecture18_sequences.fa")
+seq
+```
+
+    ##              1        .         .         .         .         .         60 
+    ## P53_wt       MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP
+    ## P53_mutant   MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMLDLMLSPDDIEQWFTEDPGP
+    ##              **************************************** ******************* 
+    ##              1        .         .         .         .         .         60 
+    ## 
+    ##             61        .         .         .         .         .         120 
+    ## P53_wt       DEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTYQGSYGFRLGFLHSGTAK
+    ## P53_mutant   DEAPWMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTYQGSYGFRLGFLHSGTAK
+    ##              **** ******************************************************* 
+    ##             61        .         .         .         .         .         120 
+    ## 
+    ##            121        .         .         .         .         .         180 
+    ## P53_wt       SVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAMAIYKQSQHMTEVVRRCPHHE
+    ## P53_mutant   SVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAMAIYKQSQHMTEVVRRCPHHE
+    ##              ************************************************************ 
+    ##            121        .         .         .         .         .         180 
+    ## 
+    ##            181        .         .         .         .         .         240 
+    ## P53_wt       RCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFRHSVVVPYEPPEVGSDCTTIHYNYMCNS
+    ## P53_mutant   RCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFVHSVVVPYEPPEVGSDCTTIHYNYMCNS
+    ##              ******************************** *************************** 
+    ##            181        .         .         .         .         .         240 
+    ## 
+    ##            241        .         .         .         .         .         300 
+    ## P53_wt       SCMGGMNRRPILTIITLEDSSGNLLGRNSFEVRVCACPGRDRRTEEENLRKKGEPHHELP
+    ## P53_mutant   SCMGGMNRRPILTIITLEV-----------------------------------------
+    ##              ******************                                           
+    ##            241        .         .         .         .         .         300 
+    ## 
+    ##            301        .         .         .         .         .         360 
+    ## P53_wt       PGSTKRALPNNTSSSPQPKKKPLDGEYFTLQIRGRERFEMFRELNEALELKDAQAGKEPG
+    ## P53_mutant   ------------------------------------------------------------
+    ##                                                                           
+    ##            301        .         .         .         .         .         360 
+    ## 
+    ##            361        .         .         .  393 
+    ## P53_wt       GSRAHSSHLKSKKGQSTSRHKKLMFKTEGPDSD
+    ## P53_mutant   ---------------------------------
+    ##                                                
+    ##            361        .         .         .  393 
+    ## 
+    ## Call:
+    ##   read.fasta(file = "lecture18_sequences.fa")
+    ## 
+    ## Class:
+    ##   fasta
+    ## 
+    ## Alignment dimensions:
+    ##   2 sequence rows; 393 position columns (259 non-gap, 134 gap) 
+    ## 
+    ## + attr: id, ali, call
