@@ -462,3 +462,53 @@ abline(h=-log(0.05), col="darkgray", lty=2)
 ```
 
 ![](class14_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+``` r
+# Reset the color palette
+```
+
+We could also setup a custom color vector indicating transcripts with
+large fold change and significant differences between conditions:
+
+``` r
+# Setup our custom point color vector 
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ]  <- "red" 
+
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+
+#Volcano plot with custom colors 
+customColPlot <- plot( res$log2FoldChange,  -log(res$padj), 
+ col=mycols, ylab="-Log(P-value)", xlab="Log2(FoldChange)" )
+customColPlot
+```
+
+    ## NULL
+
+``` r
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.05), col="gray", lty=2)
+```
+
+![](class14_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+
+and do the same plot with **ggplot**…
+
+``` r
+library(ggplot2)
+
+ggplot(as.data.frame(res), aes(log2FoldChange, -log10(pvalue), col=sig)) + 
+    geom_point() + 
+    ggtitle("Volcano plot")
+```
+
+    ## Warning: Removed 13578 rows containing missing values (geom_point).
+
+![](class14_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+
+Save the results\!\!
+
+``` r
+write.csv(res, file = "expression_results.csv")
+```
