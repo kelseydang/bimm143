@@ -8,10 +8,12 @@ This is my work from [BIMM143 at UC San Diego](https://bioboot.github.io/bimm143
 - Class07: [Bioinformatics R packages from CRAN and BioConductor](https://github.com/kelseydang/bimm143/blob/master/class07/class07.md)
 - Class08: [Introduction to Machine Learning for Bioinformatics 1](https://github.com/kelseydang/bimm143/blob/master/class08/class08.md)
 - Class09: [Learning Analysis of Human Breast Cancer Cells](https://github.com/kelseydang/bimm143/blob/master/class09/class09.md)
+- Class10: No RMarkdown
 - Class11: [Structural Bioinformatics](https://github.com/kelseydang/bimm143/blob/master/class11/class11.md)
 - Class12: [Bioinformatics in Drug Discovery and Design](https://github.com/kelseydang/bimm143/blob/master/class12/class12.md)
+- Class13: No RMarkdown
 - Class14: [Transcriptomics and the Analysis of RNA-Seq data](https://github.com/kelseydang/bimm143/blob/master/class14/class14.md)
 - Class15: [Genome annotation and the interpretation of gene lists](https://github.com/kelseydang/bimm143/blob/master/class15/class15.md)
-- Class16: [Essential UNIX for bioinformatics](https://github.com/kelseydang/bimm143/blob/master/class16/class16.md)
+- Class16: No RMarkdown
 - Class17: [Biological network analysis](https://github.com/kelseydang/bimm143/blob/master/class17/class17.md)
 - Class18: [Cancer genomics](https://github.com/kelseydang/bimm143/blob/master/class18/class18.md)
